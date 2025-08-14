@@ -23,6 +23,15 @@ public class FPController : MonoBehaviour
     public float crouchSpeed = 2f; // speed of the player when crouching
     private float originalMoveSpeed; // original move speed for crouch toggle
 
+    [Header("Pickup")]
+    public float pickupRange = 2f; // range for picking up items
+    public Transform holdPoint; // where the item is held up
+    private PickUpObject heldObject; // the item that is currently held
+
+    [Header("Throw")]
+    public float throwForce = 10f; // force applied when throwing an object
+    public float throwUpwardForce = 1f; // upward force applied when throwing an object
+
 
     private CharacterController controller;
     private Vector2 moveInput;
@@ -40,6 +49,11 @@ public class FPController : MonoBehaviour
     {
         HandleMovement(); //needs to run every frame
         HandleLook();
+
+        if (heldObject != null) // if the player is holding an object
+        {
+            heldObject.MoveToPosition(holdPoint.position); // move the object to the hold point
+        }
     }
 
     // Input System methods very specific naming!!!!
@@ -103,6 +117,45 @@ public class FPController : MonoBehaviour
                 Destroy(bullet, 2f); // destroys the bullet after 2 seconds to avoid clutter
             }
         }
+    }
+
+    public void OnPickUp(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return; // if the context is not performed, return
+
+        if (heldObject == null) // check not already holding an object
+        {
+            Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit, pickupRange))
+            {
+               PickUpObject pickUp = hit.collider.GetComponent<PickUpObject>();
+                if (pickUp != null) // check if the object has the PickUpObject component
+                {
+                    heldObject = pickUp; // set the held object
+                    heldObject.PickUp(holdPoint); // call the PickUp method
+                }
+            }
+        }
+        else // if the player is holding an object
+        {
+            heldObject.Drop(); // call the Drop method
+            heldObject = null; // set the held object to null
+        }
+    }
+
+    public void OnThrow(InputAction.CallbackContext context)
+    {
+        if (heldObject == null) return; // if the player is not holding an object, return
+        if (!context.performed) return; // if the context is canceled, return
+
+
+        Vector3 throwDirection = cameraTransform.forward; // calculate the throw direction
+        Vector3 impulse = throwDirection * throwForce + Vector3.up * throwUpwardForce; // the force
+
+        heldObject.Throw(impulse); // call the Throw method on the held object
+        heldObject = null; // set the held object to null
+    
     }
     public void HandleMovement()
     {
