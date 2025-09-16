@@ -32,6 +32,9 @@ public class FPController : MonoBehaviour
     public float throwForce = 10f; // force applied when throwing an object
     public float throwUpwardForce = 1f; // upward force applied when throwing an object
 
+    [Header("Interact")]
+    public float interactRange = 2f; // range for interacting with objects
+
 
     private CharacterController controller;
     private Vector2 moveInput;
@@ -105,19 +108,7 @@ public class FPController : MonoBehaviour
            
     }
 
-    public void Shoot()
-    {
-        if (bulletPrefab != null && bulletSpawnPoint != null) // check if the bullet prefab and spawn point are set
-        {
-            GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
-            Rigidbody rb = bullet.GetComponent<Rigidbody>();
-            if (rb != null)
-            {
-                rb.AddForce(bulletSpawnPoint.forward * bulletSpeed); // adds force to the bullet
-                Destroy(bullet, 2f); // destroys the bullet after 2 seconds to avoid clutter
-            }
-        }
-    }
+   
 
     public void OnPickUp(InputAction.CallbackContext context)
     {
@@ -157,6 +148,25 @@ public class FPController : MonoBehaviour
         heldObject = null; // set the held object to null
     
     }
+
+    public void OnInteract(InputAction.CallbackContext context)
+    {
+        if (!context.performed) return; // if the context is not performed, return
+
+        Ray ray = new Ray(cameraTransform.position, cameraTransform.forward);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, interactRange))
+        {
+            if (hit.collider.CompareTag("Switchable")) // check if the object has the Switchable tag
+            {
+                var switchable = hit.collider.GetComponent<MaterialSwitcher>();
+                if (switchable != null) // check if the object has the MaterialSwitcher component
+                {
+                    switchable.SwitchMaterial(); // call the SwitchMaterial method
+                }
+            }
+        }
+    }
     public void HandleMovement()
     {
         Vector3 move = transform.right * moveInput.x + transform.forward *
@@ -176,5 +186,19 @@ public class FPController : MonoBehaviour
         verticalLookLimit);
         cameraTransform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
         transform.Rotate(Vector3.up * mouseX); //its a whole thing
+    }
+
+    public void Shoot()
+    {
+        if (bulletPrefab != null && bulletSpawnPoint != null) // check if the bullet prefab and spawn point are set
+        {
+            GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
+            Rigidbody rb = bullet.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.AddForce(bulletSpawnPoint.forward * bulletSpeed); // adds force to the bullet
+                Destroy(bullet, 2f); // destroys the bullet after 2 seconds to avoid clutter
+            }
+        }
     }
 }

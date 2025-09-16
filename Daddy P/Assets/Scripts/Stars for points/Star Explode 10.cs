@@ -27,16 +27,10 @@ public class StarExplode10 : MonoBehaviour
             Debug.Log("Collision detected with: " + other.name); // Log the name of the object collided with
             explode.Play(); // Play the particle system when a collision occurs
 
-            if (other.CompareTag("Pickup")) // Check if the collided object was thrown
-            {
-            
-                    PlayerScore.score += 10; // Increase the player's score by 10
-            }
-               
+         
             }
 
 
         }
     }
 
-}
